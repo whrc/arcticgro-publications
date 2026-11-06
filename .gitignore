@@ -1,0 +1,6 @@
+_site/
+candidates.md
+.Rhistory
+.RData
+.Rproj.user/
+.DS_Store

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArcticGRO Publications</title>
+<meta name="description" content="Publications that use data from the Arctic Great Rivers Observatory (ArcticGRO): searchable list with DOIs, open-access links and citation export.">
+<style>
+  :root {
+    --surface: #fcfcfb; --card: #ffffff; --text: #0b0b0b; --text-2: #52514e; --muted: #77766f;
+    --line: #e6e5e0; --brand: #1e6aa8; --brand-dark: #174f80;
+    --primary: #2a78d6; --secondary: #eb6834; --tertiary: #1baf7a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 32px 0 12px; }
+  h3.year { font-size: 18px; margin: 28px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  a { color: var(--brand); }
+  a:hover { color: var(--brand-dark); }
+  .lead { color: var(--text-2); max-width: 760px; margin: 0 0 16px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 8px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; min-width: 150px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.1; }
+  .stat span { color: var(--text-2); font-size: 14px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 16px; position: relative; }
+  .chart-card .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--text-2); margin-bottom: 4px; }
+  .chart-card .hint { font-size: 13px; color: var(--muted); }
+  svg text { font-family: inherit; }
+  .tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--line); border-radius: 8px;
+         box-shadow: 0 4px 16px rgba(0,0,0,.08); padding: 8px 10px; font-size: 13px; display: none; white-space: nowrap; z-index: 5; }
+  details.types { margin: 12px 0 0; color: var(--text-2); font-size: 14px; }
+  details.types summary { cursor: pointer; color: var(--brand); }
+  details.types dl { margin: 8px 0 0; } details.types dt { font-weight: 600; color: var(--text); margin-top: 8px; }
+  details.types dd { margin: 2px 0 0; }
+  .filters { position: sticky; top: 0; z-index: 4; background: var(--surface); padding: 12px 0; border-bottom: 1px solid var(--line);
+             display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 24px; }
+  .filters input[type=search] { flex: 1 1 260px; min-width: 200px; padding: 9px 12px; border: 1px solid #c9c8c1; border-radius: 8px; font: inherit; }
+  .chip { border: 1px solid #c9c8c1; background: var(--card); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+  .chip[aria-pressed="true"] { border-color: var(--text-2); background: #f0efec; font-weight: 600; }
+  .filters select { padding: 8px 10px; border: 1px solid #c9c8c1; border-radius: 8px; font: inherit; font-size: 14px; background: var(--card); }
+  .filters label { font-size: 14px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; }
+  .btn { border: 1px solid var(--brand); color: var(--brand); background: var(--card); border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+  .btn:hover { background: #eef4fb; }
+  .count { color: var(--text-2); font-size: 14px; margin: 12px 0 0; }
+  .count button { margin-left: 8px; }
+  ol.list { list-style: none; padding: 0; margin: 0; }
+  .pub { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 8px 0; }
+  .pub .cit { margin: 0 0 6px; overflow-wrap: anywhere; }
+  .pub .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; color: var(--text-2); }
+  .pub .meta a { text-decoration: none; } .pub .meta a:hover { text-decoration: underline; }
+  .badge { display: inline-flex; align-items: center; font-size: 13px; color: var(--text-2); }
+  .copy { border: 0; background: none; color: var(--brand); cursor: pointer; font: inherit; font-size: 14px; padding: 0; }
+  .found { background: #f4f8fc; border: 1px solid #d6e4f2; border-radius: 10px; padding: 4px 16px 12px; }
+  .found .pub { margin: 8px 0; }
+  .contact { margin-top: 32px; padding: 16px; border-radius: 10px; background: #f4f8fc; border: 1px solid #d6e4f2; }
+  .empty { color: var(--text-2); padding: 24px 0; }
+  mark { background: #fff1b8; padding: 0; }
+  .sr { position: absolute; left: -9999px; }
+  @media (max-width: 640px) { h1 { font-size: 24px; } .stat { min-width: 0; flex: 1 1 40%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Publications using ArcticGRO data</h1>
+  <p class="lead">Papers that use data from the Arctic Great Rivers Observatory, from its foundational work to this year.
+    Know of a missing paper? <a href="mailto:info@arcticgreatrivers.org?subject=Publication%20using%20ArcticGRO%20data">Let us know</a>.</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart-card">
+    <div class="legend" id="legend"></div>
+    <div id="chart"></div>
+    <div class="hint">Click a bar to show that year; click again to show all years.</div>
+    <div class="tip" id="tip" role="status"></div>
+  </div>
+
+  <details class="types">
+    <summary>What do Primary, Secondary and Tertiary mean?</summary>
+    <dl>
+      <dt>Primary</dt><dd>Core ArcticGRO papers written by project personnel.</dd>
+      <dt>Secondary</dt><dd>Papers written by non-project personnel in collaboration with ArcticGRO scientists, and papers written by project personnel that take advantage of observatory data but are primarily associated with other projects.</dd>
+      <dt>Tertiary</dt><dd>Papers written by independent investigators that use the ArcticGRO dataset directly, use summarized results (e.g. average annual flux and tracer values) from the observatory's primary publications, and/or benefited from sampling opportunities provided by the observatory. Papers that simply cite ArcticGRO publications in their introduction or discussion are not included.</dd>
+    </dl>
+  </details>
+
+  <h2>Foundational publications</h2>
+  <div class="found"><ol class="list" id="foundational"></ol></div>
+
+  <h2 id="all">All publications</h2>
+  <div class="filters" role="search">
+    <label class="sr" for="q">Search publications</label>
+    <input type="search" id="q" placeholder="Search author, title, journal or DOI">
+    <span id="typeChips"></span>
+    <label>From <select id="yFrom" aria-label="From year"></select></label>
+    <label>to <select id="yTo" aria-label="To year"></select></label>
+    <label id="sortWrap">Sort <select id="sort" aria-label="Sort">
+      <option value="new">Newest first</option><option value="old">Oldest first</option>
+    </select></label>
+    <label id="oaWrap"><input type="checkbox" id="oa"> Free to read</label>
+  </div>
+  <p class="count"><span id="count"></span>
+    <button class="btn" id="dl" type="button">Download list (CSV)</button>
+    <button class="btn" id="reset" type="button">Clear filters</button></p>
+  <div id="list"></div>
+
+  <div class="contact">
+    <b>Published a paper with ArcticGRO data?</b> Email
+    <a href="mailto:info@arcticgreatrivers.org?subject=Publication%20using%20ArcticGRO%20data">info@arcticgreatrivers.org</a>
+    with its DOI and we will add it. How to cite the data: <a href="https://arcticgreatrivers.org/data/" target="_top">ArcticGRO Data page</a>.
+  </div>
+  <p class="count" id="updated"></p>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const TYPES = ['Primary', 'Secondary', 'Tertiary'];
+const COLORS = { Primary: '#2a78d6', Secondary: '#eb6834', Tertiary: '#1baf7a' };
+const all = DATA.pubs.map((p, i) => ({ ...p, i, hay: (p.citation + ' ' + (p.doi || '')).toLowerCase() }));
+const found = all.filter(p => p.foundational);
+const main = all.filter(p => !p.foundational);
+const years = [...new Set(all.map(p => p.year))].sort((a, b) => a - b);
+const minY = years[0], maxY = years[years.length - 1];
+const state = { q: '', types: new Set(TYPES), from: minY, to: maxY, sort: 'new', oa: false };
+
+const $ = id => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === 'text') e.textContent = v; else e.setAttribute(k, v); }
+  kids.forEach(k => k && e.append(k)); return e; };
+
+// ---- stats ----
+const byType = t => all.filter(p => p.type === t).length;
+$('stats').append(
+  el('div', { class: 'stat' }, el('b', { text: all.length.toLocaleString() }), el('span', { text: `publications, ${minY}–${maxY}` })),
+  ...TYPES.map(t => el('div', { class: 'stat' }, el('b', { text: byType(t) }),
+    el('span', {}, el('i', { class: 'dot', style: `background:${COLORS[t]}` }), document.createTextNode(t))))
+);
+if (DATA.info.has_citations) {
+  const cites = all.reduce((a, p) => a + (p.cited_by || 0), 0);
+  $('stats').append(el('div', { class: 'stat' }, el('b', { text: cites.toLocaleString() }), el('span', { text: 'citations (OpenAlex)' })));
+}
+$('updated').textContent = `List updated ${DATA.info.updated}.`;
+
+// ---- chart: publications per year, stacked by type ----
+TYPES.forEach(t => $('legend').append(el('span', {}, el('i', { class: 'dot', style: `background:${COLORS[t]}` }), document.createTextNode(t))));
+function drawChart() {
+  const ys = []; for (let y = Math.max(minY, 2000); y <= maxY; y++) ys.push(y);
+  const counts = ys.map(y => { const o = { y }; TYPES.forEach(t => o[t] = all.filter(p => p.year === y && p.type === t).length); o.total = TYPES.reduce((a, t) => a + o[t], 0); return o; });
+  const W = 1000, H = 230, L = 36, R = 8, T = 10, B = 26;
+  const maxV = Math.max(5, ...counts.map(c => c.total));
+  const step = maxV > 30 ? 10 : 5, top = Math.ceil(maxV / step) * step;
+  const bw = (W - L - R) / ys.length, x = i => L + i * bw, yv = v => T + (H - T - B) * (1 - v / top);
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', '100%'); svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Number of ArcticGRO publications per year, by type');
+  const add = (tag, a, txt) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.append(e); return e; };
+  for (let v = 0; v <= top; v += step) {
+    add('line', { x1: L, x2: W - R, y1: yv(v), y2: yv(v), stroke: '#e9e8e3' });
+    add('text', { x: L - 6, y: yv(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: '#52514e' }, v);
+  }
+  counts.forEach((c, i) => {
+    if (c.y % 5 === 0 || i === counts.length - 1)
+      add('text', { x: x(i) + bw / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': 12, fill: '#52514e' }, c.y);
+    let acc = 0;
+    const sel = state.from === state.to && state.from === c.y;
+    const dim = state.from === state.to && !sel;
+    TYPES.forEach(t => {
+      if (!c[t]) return;
+      const y0 = yv(acc + c[t]), h = yv(acc) - y0;
+      add('rect', { x: x(i) + 2, y: y0 + 1, width: Math.max(1, bw - 4), height: Math.max(0, h - 2), rx: 2,
+                    fill: COLORS[t],
+                    opacity: dim ? 0.35 : 1 });
+      acc += c[t];
+    });
+    const hit = add('rect', { x: x(i), y: T, width: bw, height: H - T - B, fill: 'transparent', style: 'cursor:pointer',
+                              tabindex: 0, 'aria-label': `${c.y}: ${c.total} publications` });
+    const show = ev => { const tip = $('tip'); tip.style.display = 'block';
+      tip.innerHTML = `<b>${c.y}</b>: ${c.total} publication${c.total === 1 ? '' : 's'}<br>` +
+        TYPES.map(t => `<i class="dot" style="background:${COLORS[t]}"></i>${t}: ${c[t]}`).join('<br>');
+      const box = $('chart').getBoundingClientRect(), card = $('chart').parentElement.getBoundingClientRect();
+      const px = box.left - card.left + (x(i) + bw / 2) / W * box.width;
+      tip.style.left = Math.min(px + 12, card.width - 170) + 'px'; tip.style.top = (box.top - card.top + 10) + 'px'; };
+    hit.addEventListener('mousemove', show); hit.addEventListener('focus', show);
+    hit.addEventListener('mouseleave', () => $('tip').style.display = 'none');
+    hit.addEventListener('blur', () => $('tip').style.display = 'none');
+    const pick = () => { if (state.from === c.y && state.to === c.y) { state.from = minY; state.to = maxY; } else { state.from = state.to = c.y; }
+      syncControls(); render(); drawChart(); document.getElementById('all').scrollIntoView({ behavior: 'smooth' }); };
+    hit.addEventListener('click', pick);
+    hit.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+  $('chart').replaceChildren(svg);
+}
+
+// ---- filters ----
+TYPES.forEach(t => { const b = el('button', { class: 'chip', type: 'button', 'aria-pressed': 'true' },
+  el('i', { class: 'dot', style: `background:${COLORS[t]}` }), document.createTextNode(t));
+  b.addEventListener('click', () => { state.types.has(t) ? state.types.delete(t) : state.types.add(t);
+    if (!state.types.size) state.types.add(t); syncControls(); render(); });
+  b.dataset.type = t; $('typeChips').append(b, document.createTextNode(' ')); });
+[...years].reverse().forEach(y => { $('yFrom').append(el('option', { value: y, text: y })); $('yTo').append(el('option', { value: y, text: y })); });
+if (DATA.info.has_citations) $('sort').append(el('option', { value: 'cited', text: 'Most cited' }));
+if (!DATA.info.has_oa) $('oaWrap').style.display = 'none';
+
+function syncControls() {
+  $('yFrom').value = state.from; $('yTo').value = state.to; $('sort').value = state.sort; $('oa').checked = state.oa; $('q').value = state.q;
+  document.querySelectorAll('#typeChips .chip').forEach(b => b.setAttribute('aria-pressed', state.types.has(b.dataset.type)));
+}
+let qTimer;
+$('q').addEventListener('input', e => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = e.target.value.trim(); render(); }, 150); });
+$('yFrom').addEventListener('change', e => { state.from = +e.target.value; if (state.from > state.to) state.to = state.from; syncControls(); render(); drawChart(); });
+$('yTo').addEventListener('change', e => { state.to = +e.target.value; if (state.to < state.from) state.from = state.to; syncControls(); render(); drawChart(); });
+$('sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+$('oa').addEventListener('change', e => { state.oa = e.target.checked; render(); });
+$('reset').addEventListener('click', () => { Object.assign(state, { q: '', from: minY, to: maxY, sort: 'new', oa: false }); state.types = new Set(TYPES); syncControls(); render(); drawChart(); });
+
+// ---- list ----
+function highlight(text, words) {
+  const span = document.createElement('span');
+  if (!words.length) { span.textContent = text; return span; }
+  const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+  text.split(re).forEach((part, k) => span.append(k % 2 ? el('mark', { text: part }) : document.createTextNode(part)));
+  return span;
+}
+function item(p, words) {
+  const meta = el('div', { class: 'meta' },
+    el('span', { class: 'badge' }, el('i', { class: 'dot', style: `background:${COLORS[p.type]}` }), document.createTextNode(p.type)));
+  if (p.doi) meta.append(el('a', { href: `https://doi.org/${p.doi}`, target: '_blank', rel: 'noopener', text: `doi:${p.doi}` }));
+  else if (p.url) meta.append(el('a', { href: p.url, target: '_blank', rel: 'noopener', text: 'Link' }));
+  if (p.oa_url) meta.append(el('a', { href: p.oa_url, target: '_blank', rel: 'noopener', text: 'Free to read' }));
+  if (p.cited_by != null) meta.append(el('span', { text: `Cited by ${p.cited_by}` }));
+  const copy = el('button', { class: 'copy', type: 'button', text: 'Copy citation' });
+  copy.addEventListener('click', async () => { const txt = p.citation + (p.doi ? ` https://doi.org/${p.doi}` : (p.url ? ` ${p.url}` : ''));
+    try { await navigator.clipboard.writeText(txt); copy.textContent = 'Copied'; } catch (e) { copy.textContent = 'Copy failed'; }
+    setTimeout(() => copy.textContent = 'Copy citation', 1500); });
+  meta.append(copy);
+  return el('li', { class: 'pub' }, el('p', { class: 'cit' }, highlight(p.citation, words)), meta);
+}
+function filtered() {
+  const words = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let r = main.filter(p => state.types.has(p.type) && p.year >= state.from && p.year <= state.to &&
+    (!state.oa || p.oa_url) && words.every(w => p.hay.includes(w)));
+  if (state.sort === 'new') r.sort((a, b) => b.year - a.year || a.i - b.i);
+  if (state.sort === 'old') r.sort((a, b) => a.year - b.year || a.i - b.i);
+  if (state.sort === 'cited') r.sort((a, b) => (b.cited_by || 0) - (a.cited_by || 0));
+  return { r, words };
+}
+function render() {
+  const { r, words } = filtered();
+  $('count').textContent = `Showing ${r.length} of ${main.length} publications`;
+  const box = $('list'); box.replaceChildren();
+  if (!r.length) { box.append(el('p', { class: 'empty', text: 'No publications match these filters.' })); return; }
+  if (state.sort === 'cited') { const ol = el('ol', { class: 'list' }); r.forEach(p => ol.append(item(p, words))); box.append(ol); return; }
+  let cur = null, ol = null;
+  r.forEach(p => { if (p.year !== cur) { cur = p.year; box.append(el('h3', { class: 'year', text: `${cur} (${r.filter(q => q.year === cur).length})` })); ol = el('ol', { class: 'list' }); box.append(ol); } ol.append(item(p, words)); });
+}
+$('dl').addEventListener('click', () => {
+  const { r } = filtered();
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [['type', 'year', 'citation', 'doi', 'url'].join(','), ...r.map(p => [p.type, p.year, p.citation, p.doi, p.url].map(esc).join(','))];
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: 'arcticgro_publications.csv' }); document.body.append(a); a.click(); a.remove();
+});
+
+found.sort((a, b) => a.year - b.year).forEach(p => $('foundational').append(item(p, [])));
+syncControls(); drawChart(); render();
+</script>
+</body>
+</html>
