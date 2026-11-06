@@ -26,6 +26,7 @@
   .stat b { display: block; font-size: 26px; line-height: 1.1; }
   .stat span { color: var(--text-2); font-size: 14px; }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  #chart { overflow: hidden; }
   .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 16px; position: relative; }
   .chart-card .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--text-2); margin-bottom: 4px; }
   .chart-card .hint { font-size: 13px; color: var(--muted); }
@@ -45,6 +46,7 @@
   .filters label { font-size: 14px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; }
   .btn { border: 1px solid var(--brand); color: var(--brand); background: var(--card); border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 14px; cursor: pointer; }
   .btn:hover { background: #eef4fb; }
+  .btn.more { display: block; margin: 16px auto 0; padding: 10px 18px; }
   .count { color: var(--text-2); font-size: 14px; margin: 12px 0 0; }
   .count button { margin-left: 8px; }
   ol.list { list-style: none; padding: 0; margin: 0; }
@@ -60,6 +62,7 @@
   .empty { color: var(--text-2); padding: 24px 0; }
   mark { background: #fff1b8; padding: 0; }
   .sr { position: absolute; left: -9999px; }
+  .in-frame .filters { position: static; }
   @media (max-width: 640px) { h1 { font-size: 24px; } .stat { min-width: 0; flex: 1 1 40%; } }
 </style>
 </head>
@@ -124,7 +127,8 @@ const found = all.filter(p => p.foundational);
 const main = all.filter(p => !p.foundational);
 const years = [...new Set(all.map(p => p.year))].sort((a, b) => a - b);
 const minY = years[0], maxY = years[years.length - 1];
-const state = { q: '', types: new Set(TYPES), from: minY, to: maxY, sort: 'new', oa: false };
+const PAGE = 50;
+const state = { q: '', types: new Set(TYPES), from: minY, to: maxY, sort: 'new', oa: false, limit: PAGE };
 
 const $ = id => document.getElementById(id);
 const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag);
@@ -140,7 +144,7 @@ $('stats').append(
 );
 if (DATA.info.has_citations) {
   const cites = all.reduce((a, p) => a + (p.cited_by || 0), 0);
-  $('stats').append(el('div', { class: 'stat' }, el('b', { text: cites.toLocaleString() }), el('span', { text: 'citations (OpenAlex)' })));
+  $('stats').append(el('div', { class: 'stat' }, el('b', { text: cites.toLocaleString() }), el('span', { text: 'times these papers have been cited (OpenAlex)' })));
 }
 $('updated').textContent = `List updated ${DATA.info.updated}.`;
 
@@ -149,13 +153,15 @@ TYPES.forEach(t => $('legend').append(el('span', {}, el('i', { class: 'dot', sty
 function drawChart() {
   const ys = []; for (let y = Math.max(minY, 2000); y <= maxY; y++) ys.push(y);
   const counts = ys.map(y => { const o = { y }; TYPES.forEach(t => o[t] = all.filter(p => p.year === y && p.type === t).length); o.total = TYPES.reduce((a, t) => a + o[t], 0); return o; });
-  const W = 1000, H = 230, L = 36, R = 8, T = 10, B = 26;
+  const W = Math.max(300, Math.round($('chart').clientWidth || 1000)), small = W < 600;
+  const H = small ? 200 : 230, L = 32, R = 6, T = 10, B = 26;
+  const every = small ? 10 : 5;
   const maxV = Math.max(5, ...counts.map(c => c.total));
   const step = maxV > 30 ? 10 : 5, top = Math.ceil(maxV / step) * step;
   const bw = (W - L - R) / ys.length, x = i => L + i * bw, yv = v => T + (H - T - B) * (1 - v / top);
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', '100%'); svg.setAttribute('role', 'img');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', 'Number of ArcticGRO publications per year, by type');
   const add = (tag, a, txt) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.append(e); return e; };
   for (let v = 0; v <= top; v += step) {
@@ -163,7 +169,7 @@ function drawChart() {
     add('text', { x: L - 6, y: yv(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: '#52514e' }, v);
   }
   counts.forEach((c, i) => {
-    if (c.y % 5 === 0 || i === counts.length - 1)
+    if (c.y % every === 0 || (!small && i === counts.length - 1))
       add('text', { x: x(i) + bw / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': 12, fill: '#52514e' }, c.y);
     let acc = 0;
     const sel = state.from === state.to && state.from === c.y;
@@ -171,7 +177,7 @@ function drawChart() {
     TYPES.forEach(t => {
       if (!c[t]) return;
       const y0 = yv(acc + c[t]), h = yv(acc) - y0;
-      add('rect', { x: x(i) + 2, y: y0 + 1, width: Math.max(1, bw - 4), height: Math.max(0, h - 2), rx: 2,
+      add('rect', { x: x(i) + (small ? 1 : 2), y: y0 + 1, width: Math.max(1, bw - (small ? 2 : 4)), height: Math.max(0, h - 2), rx: 2,
                     fill: COLORS[t],
                     opacity: dim ? 0.35 : 1 });
       acc += c[t];
@@ -182,13 +188,13 @@ function drawChart() {
       tip.innerHTML = `<b>${c.y}</b>: ${c.total} publication${c.total === 1 ? '' : 's'}<br>` +
         TYPES.map(t => `<i class="dot" style="background:${COLORS[t]}"></i>${t}: ${c[t]}`).join('<br>');
       const box = $('chart').getBoundingClientRect(), card = $('chart').parentElement.getBoundingClientRect();
-      const px = box.left - card.left + (x(i) + bw / 2) / W * box.width;
+      const px = box.left - card.left + (x(i) + bw / 2);
       tip.style.left = Math.min(px + 12, card.width - 170) + 'px'; tip.style.top = (box.top - card.top + 10) + 'px'; };
     hit.addEventListener('mousemove', show); hit.addEventListener('focus', show);
     hit.addEventListener('mouseleave', () => $('tip').style.display = 'none');
     hit.addEventListener('blur', () => $('tip').style.display = 'none');
     const pick = () => { if (state.from === c.y && state.to === c.y) { state.from = minY; state.to = maxY; } else { state.from = state.to = c.y; }
-      syncControls(); render(); drawChart(); document.getElementById('all').scrollIntoView({ behavior: 'smooth' }); };
+      syncControls(); render(); drawChart(); scrollToEl($('all')); };
     hit.addEventListener('click', pick);
     hit.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
   });
@@ -248,14 +254,24 @@ function filtered() {
   if (state.sort === 'cited') r.sort((a, b) => (b.cited_by || 0) - (a.cited_by || 0));
   return { r, words };
 }
-function render() {
-  const { r, words } = filtered();
-  $('count').textContent = `Showing ${r.length} of ${main.length} publications`;
+function render(keepLimit) {
+  if (!keepLimit) state.limit = PAGE;
+  const { r: all_r, words } = filtered();
+  const r = all_r.slice(0, state.limit);
+  $('count').textContent = all_r.length === main.length ? `${main.length} publications` : `${all_r.length} of ${main.length} publications match`;
   const box = $('list'); box.replaceChildren();
   if (!r.length) { box.append(el('p', { class: 'empty', text: 'No publications match these filters.' })); return; }
-  if (state.sort === 'cited') { const ol = el('ol', { class: 'list' }); r.forEach(p => ol.append(item(p, words))); box.append(ol); return; }
-  let cur = null, ol = null;
-  r.forEach(p => { if (p.year !== cur) { cur = p.year; box.append(el('h3', { class: 'year', text: `${cur} (${r.filter(q => q.year === cur).length})` })); ol = el('ol', { class: 'list' }); box.append(ol); } ol.append(item(p, words)); });
+  if (state.sort === 'cited') { const ol = el('ol', { class: 'list' }); r.forEach(p => ol.append(item(p, words))); box.append(ol); }
+  else {
+    let cur = null, ol = null;
+    r.forEach(p => { if (p.year !== cur) { cur = p.year; box.append(el('h3', { class: 'year', text: `${cur} (${all_r.filter(q => q.year === cur).length})` })); ol = el('ol', { class: 'list' }); box.append(ol); } ol.append(item(p, words)); });
+  }
+  const left = all_r.length - r.length;
+  if (left > 0) {
+    const more = el('button', { class: 'btn more', type: 'button', text: `Show ${Math.min(PAGE, left)} more (${left} not shown)` });
+    more.addEventListener('click', () => { state.limit += PAGE; render(true); });
+    box.append(more);
+  }
 }
 $('dl').addEventListener('click', () => {
   const { r } = filtered();
@@ -267,6 +283,25 @@ $('dl').addEventListener('click', () => {
 
 found.sort((a, b) => a.year - b.year).forEach(p => $('foundational').append(item(p, [])));
 syncControls(); drawChart(); render();
+
+// ---- when shown inside an iframe (e.g. on the WordPress site) ----
+// Tells the host page how tall this page is, so the frame can grow to fit
+// (no scrollbar inside the frame), and asks it to scroll when needed.
+const inFrame = window.parent !== window;
+function scrollToEl(target) {
+  if (inFrame) window.parent.postMessage({ type: 'arcticgro-pubs-scroll', top: target.getBoundingClientRect().top + window.scrollY }, '*');
+  else target.scrollIntoView({ behavior: 'smooth' });
+}
+if (inFrame) {
+  document.documentElement.classList.add('in-frame');
+  let last = 0;
+  const report = () => { const h = Math.ceil(document.body.getBoundingClientRect().height);
+    if (Math.abs(h - last) > 2) { last = h; window.parent.postMessage({ type: 'arcticgro-pubs-height', height: h }, '*'); } };
+  new ResizeObserver(report).observe(document.body);
+  window.addEventListener('load', report);
+  report();
+}
+let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(drawChart, 150); });
 </script>
 </body>
 </html>

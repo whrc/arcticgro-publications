@@ -77,15 +77,33 @@ browseURL("_site/index.html")
 
 ## On the WordPress site
 
-Link to the GitHub Pages address, and/or embed it in the Publications page:
+Paste this into a Beaver Builder **HTML** module on the Publications page. The
+frame resizes itself to the length of the list (no scrollbar inside it), and
+clicking a year in the chart scrolls the page to the list.
 
 ```html
-<iframe src="https://whrc.github.io/arcticgro-publications/"
-        style="width:100%; height:1800px; border:0;" title="ArcticGRO publications"></iframe>
+<iframe id="arcticgro-pubs" src="https://whrc.github.io/arcticgro-publications/"
+        style="width:100%; height:1800px; border:0; display:block;"
+        title="ArcticGRO publications" scrolling="no"></iframe>
+<script>
+(function () {
+  var frame = document.getElementById('arcticgro-pubs');
+  window.addEventListener('message', function (e) {
+    if (e.origin !== 'https://whrc.github.io' || !e.data) return;
+    if (e.data.type === 'arcticgro-pubs-height') frame.style.height = e.data.height + 'px';
+    if (e.data.type === 'arcticgro-pubs-scroll')
+      window.scrollTo({ top: frame.getBoundingClientRect().top + window.scrollY + e.data.top - 20, behavior: 'smooth' });
+  });
+})();
+</script>
 ```
 
+If the page moves to a custom domain (e.g. `publications.arcticgreatrivers.org`),
+change both the `src` address and the `e.origin` check to the new address.
+
 Search engines index the list under the GitHub Pages address, not under
-arcticgreatrivers.org. Linking to it directly from the site helps people find it.
+arcticgreatrivers.org, so also put a short heading and intro text above the frame
+on the WordPress page.
 
 ## Files
 
